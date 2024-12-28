@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnableActivityLogging;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -139,7 +140,7 @@ class RouteServiceProvider extends ServiceProvider
                 // SimBrief stuff
                 Route::get('simbrief/generate', 'SimBriefController@generate')->name('simbrief.generate');
                 Route::post('simbrief/apicode', 'SimBriefController@api_code')->name('simbrief.api_code');
-                Route::get('simbrief/check_ofp', 'SimBriefController@check_ofp')->name('simbrief.check_ofp');
+                Route::get('simbrief/check_ofp', 'SimBriefController@check_ofp')->name('simbrief.check_ofp')->middleware('throttle:10,1');
                 Route::get('simbrief/update_ofp', 'SimBriefController@update_ofp')->name('simbrief.update_ofp');
                 Route::get('simbrief/{id}', 'SimBriefController@briefing')->name('simbrief.briefing');
                 Route::get('simbrief/{id}/prefile', 'SimBriefController@prefile')->name('simbrief.prefile');
@@ -169,6 +170,8 @@ class RouteServiceProvider extends ServiceProvider
                 Route::get('livemap', 'LiveMapController@index')->name('livemap.index');
 
                 Route::get('lang/{lang}', 'LanguageController@switchLang')->name('lang.switch');
+
+                Route::get('credits', 'CreditsController@index')->name('credits');
             });
 
             Route::group([
@@ -192,7 +195,7 @@ class RouteServiceProvider extends ServiceProvider
             'namespace'  => $this->namespace.'\\Admin',
             'prefix'     => 'admin',
             'as'         => 'admin.',
-            'middleware' => ['web', 'auth', 'ability:admin,admin-access'],
+            'middleware' => ['web', 'auth', 'ability:admin,admin-access', EnableActivityLogging::class],
         ], static function () {
             // CRUD for airlines
             Route::resource('airlines', 'AirlinesController')
@@ -404,6 +407,10 @@ class RouteServiceProvider extends ServiceProvider
                 'delete',
             ], 'typeratings/{id}/users', 'TypeRatingController@users')->middleware('ability:admin,typeratings');
 
+            // SimBrief Airframes
+            Route::resource('airframes', 'AirframeController')->middleware('ability:admin,aircraft,fleet');
+            Route::get('sbupdate', 'AirframeController@updateSimbriefData')->name('airframes.sbupdate')->middleware('ability:admin,aircraft,fleet');
+
             // maintenance
             Route::match(['get'], 'maintenance', 'MaintenanceController@index')
                 ->name('maintenance.index')->middleware('ability:admin,maintenance');
@@ -487,6 +494,13 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::resource('users', 'UserController')->middleware('ability:admin,users');
 
+            Route::resource('invites', 'InviteController')->middleware('ability:admin,users')
+                ->except([
+                    'show',
+                    'edit',
+                    'update',
+                ]);
+
             Route::match([
                 'get',
                 'post',
@@ -508,10 +522,15 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::match([
                 'get',
+                'patch',
                 'post',
                 'delete',
             ], 'dashboard/news', ['uses' => 'DashboardController@news'])
                 ->name('dashboard.news')->middleware('update_pending', 'ability:admin,admin-access');
+
+            Route::resource('activities', 'ActivityController')
+                ->only(['index', 'show'])
+                ->middleware('ability:admin,admin-access');
 
             //Modules
             Route::group([
@@ -637,7 +656,7 @@ class RouteServiceProvider extends ServiceProvider
                 Route::post('pireps/{pirep_id}/acars/events', 'AcarsController@acars_events');
                 Route::post('pireps/{pirep_id}/acars/logs', 'AcarsController@acars_logs');
 
-                Route::get('settings', 'SettingsController@index');
+                // Route::get('settings', 'SettingsController@index');
 
                 // This is the info of the user whose token is in use
                 Route::get('user', 'UserController@index');

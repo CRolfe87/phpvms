@@ -85,6 +85,8 @@ class PirepController extends Controller
             $aircraft[''] = '';
         }
 
+        $subfleets->loadMissing('aircraft');
+
         foreach ($subfleets as $subfleet) {
             $tmp = [];
             foreach ($subfleet->aircraft->when($location_check, function ($query) use ($user_loc) {
@@ -532,13 +534,13 @@ class PirepController extends Controller
         }
 
         $airports = [
-            ['' => ''],
-            [$pirep->arr_airport->id => $pirep->arr_airport->full_name],
-            [$pirep->dpt_airport->id => $pirep->dpt_airport->full_name],
+            ''                      => '',
+            $pirep->arr_airport->id => $pirep->arr_airport->full_name,
+            $pirep->dpt_airport->id => $pirep->dpt_airport->full_name,
         ];
 
         if ($pirep->alt_airport) {
-            $airports[] = [$pirep->alt_airport->id => $pirep->alt_airport->full_name];
+            $airports[$pirep->alt_airport->id] = $pirep->alt_airport->full_name;
         }
 
         return view('pireps.edit', [

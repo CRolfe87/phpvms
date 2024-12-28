@@ -24,6 +24,8 @@ use App\Repositories\UserRepository;
 use App\Support\Units\Time;
 use App\Support\Utils;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
@@ -52,15 +54,21 @@ class UserService extends Service
     /**
      * Find the user and return them with all of the data properly attached
      *
-     * @param $user_id
+     * @param int $user_id
      *
      * @return User|null
      */
-    public function getUser($user_id): ?User
+    public function getUser(int $user_id, bool $with_subfleets = true): ?User
     {
+        $with = ['airline', 'bids', 'rank'];
+
+        if ($with_subfleets) {
+            $with[] = 'rank.subfleets';
+        }
+
         /** @var User $user */
         $user = $this->userRepo
-            ->with(['airline', 'bids', 'rank'])
+            ->with($with)
             ->find($user_id);
 
         if (empty($user)) {
@@ -71,9 +79,11 @@ class UserService extends Service
             return null;
         }
 
-        // Load the proper subfleets to the rank
-        $user->rank->subfleets = $this->getAllowableSubfleets($user);
-        $user->subfleets = $user->rank->subfleets;
+        if ($with_subfleets) {
+            // Load the proper subfleets to the rank
+            $user->rank->subfleets = $this->getAllowableSubfleets($user);
+            $user->subfleets = $user->rank->subfleets;
+        }
 
         return $user;
     }
@@ -82,23 +92,22 @@ class UserService extends Service
      * Register a pilot. Also attaches the initial roles
      * required, and then triggers the UserRegistered event
      *
-     * @param array $attrs Array with the user data
-     * @param array $roles List of "display_name" of groups to assign
-     *
-     * @throws \Exception
+     * @param array    $attrs Array with the user data
+     * @param array    $roles List of "display_name" of groups to assign
+     * @param int|null $state
      *
      * @return User
      */
-    public function createUser(array $attrs, array $roles = []): User
+    public function createUser(array $attrs, array $roles = [], ?int $state = null): User
     {
         $user = User::create($attrs);
         $user->api_key = Utils::generateApiKey();
         $user->curr_airport_id = $user->home_airport_id;
 
         // Determine if we want to auto accept
-        if (setting('pilots.auto_accept') === true) {
+        if ($state === null && setting('pilots.auto_accept') === true) {
             $user->state = UserState::ACTIVE;
-        } else {
+        } elseif ($state === null) {
             $user->state = UserState::PENDING;
         }
 
@@ -148,7 +157,7 @@ class UserService extends Service
             $user->state = UserState::DELETED;
             $user->save();
         } else {
-            $user->delete();
+            $user->forceDelete();
         }
     }
 
@@ -340,7 +349,7 @@ class UserService extends Service
      *
      * @return Collection
      */
-    public function getAllowableSubfleets($user)
+    public function getAllowableSubfleets($user, bool $paginate = false)
     {
         $restrict_rank = setting('pireps.restrict_aircraft_to_rank', true);
         $restrict_type = setting('pireps.restrict_aircraft_to_typerating', false);
@@ -362,10 +371,17 @@ class UserService extends Service
             $restrict_type = false;
         }
 
-        // @var Collection $subfleets
-        $subfleets = $this->subfleetRepo->when($restrict_rank || $restrict_type, function ($query) use ($restricted_to) {
+        $subfleetsQuery = $this->subfleetRepo->when($restrict_rank || $restrict_type, function ($query) use ($restricted_to) {
             return $query->whereIn('id', $restricted_to);
-        })->with('aircraft')->get();
+        })->with(['aircraft', 'aircraft.bid', 'fares']);
+
+        if ($paginate) {
+            /* @var Collection $subfleets */
+            $subfleets = $subfleetsQuery->paginate();
+        } else {
+            /* @var Collection $subfleets */
+            $subfleets = $subfleetsQuery->get();
+        }
 
         // Map the subfleets with the proper fare information
         return $subfleets->transform(function ($sf, $key) {
@@ -601,5 +617,34 @@ class UserService extends Service
         $user->refresh();
 
         return $user;
+    }
+
+    public function retrieveDiscordPrivateChannelId(User $user): void
+    {
+        if (is_null(config('services.discord.bot_token'))) {
+            return;
+        }
+
+        try {
+            $httpClient = new Client();
+
+            $response = $httpClient->post('https://discord.com/api/users/@me/channels', [
+                'headers' => [
+                    'Authorization' => 'Bot '.config('services.discord.bot_token'),
+                ],
+                'json' => [
+                    'recipient_id' => $user->discord_id,
+                ],
+            ]);
+
+            $privateChannel = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR)['id'];
+            $user->update([
+                'discord_private_channel_id' => $privateChannel,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Discord OAuth Error: '.$e->getMessage());
+        } catch (GuzzleException $e) {
+            Log::error('Discord OAuth Error: '.$e->getMessage());
+        }
     }
 }

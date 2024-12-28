@@ -15,7 +15,9 @@ use App\Repositories\AircraftRepository;
 use App\Repositories\AirportRepository;
 use App\Services\ExportService;
 use App\Services\FileService;
+use App\Services\FinanceService;
 use App\Services\ImportService;
+use App\Support\Units\Mass;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -26,19 +28,12 @@ class AircraftController extends Controller
 {
     use Importable;
 
-    /**
-     * AircraftController constructor.
-     *
-     * @param AirportRepository  $airportRepo
-     * @param AircraftRepository $aircraftRepo
-     * @param FileService        $fileSvc
-     * @param ImportService      $importSvc
-     */
     public function __construct(
         private readonly AirportRepository $airportRepo,
         private readonly AircraftRepository $aircraftRepo,
         private readonly FileService $fileSvc,
         private readonly ImportService $importSvc,
+        private readonly FinanceService $financeSvc,
     ) {
     }
 
@@ -125,6 +120,12 @@ class AircraftController extends Controller
     public function store(CreateAircraftRequest $request): RedirectResponse
     {
         $attrs = $request->all();
+        // Set the correct mass units
+        $attrs['dow'] = (filled($attrs['dow']) && $attrs['dow'] > 0) ? Mass::make((float) $request->input('dow'), setting('units.weight')) : null;
+        $attrs['zfw'] = (filled($attrs['zfw']) && $attrs['zfw'] > 0) ? Mass::make((float) $request->input('zfw'), setting('units.weight')) : null;
+        $attrs['mtow'] = (filled($attrs['mtow']) && $attrs['mtow'] > 0) ? Mass::make((float) $request->input('mtow'), setting('units.weight')) : null;
+        $attrs['mlw'] = (filled($attrs['mlw']) && $attrs['mlw'] > 0) ? Mass::make((float) $request->input('mlw'), setting('units.weight')) : null;
+
         $aircraft = $this->aircraftRepo->create($attrs);
 
         Flash::success('Aircraft saved successfully.');
@@ -210,6 +211,12 @@ class AircraftController extends Controller
         }
 
         $attrs = $request->all();
+        // Set the correct mass units
+        $attrs['dow'] = (filled($attrs['dow']) && $attrs['dow'] > 0) ? Mass::make((float) $request->input('dow'), setting('units.weight')) : null;
+        $attrs['zfw'] = (filled($attrs['zfw']) && $attrs['zfw'] > 0) ? Mass::make((float) $request->input('zfw'), setting('units.weight')) : null;
+        $attrs['mtow'] = (filled($attrs['mtow']) && $attrs['mtow'] > 0) ? Mass::make((float) $request->input('mtow'), setting('units.weight')) : null;
+        $attrs['mlw'] = (filled($attrs['mlw']) && $attrs['mlw'] > 0) ? Mass::make((float) $request->input('mlw'), setting('units.weight')) : null;
+
         $this->aircraftRepo->update($attrs, $id);
 
         Flash::success('Aircraft updated successfully.');
@@ -317,7 +324,8 @@ class AircraftController extends Controller
      */
     public function expenses(int $id, Request $request): View
     {
-        $aircraft = $this->aircraftRepo->findWithoutFail($id);
+        /** @var Aircraft $aircraft */
+        $aircraft = $this->aircraftRepo->with('airline')->findWithoutFail($id);
         if (empty($aircraft)) {
             return $this->return_expenses_view($aircraft);
         }
@@ -327,10 +335,11 @@ class AircraftController extends Controller
         }
 
         if ($request->isMethod('post')) {
-            $expense = new Expense($request->post());
-            $expense->ref_model = Aircraft::class;
-            $expense->ref_model_id = $aircraft->id;
-            $expense->save();
+            $this->financeSvc->addExpense(
+                $request->post(),
+                $aircraft,
+                $aircraft->airline->id
+            );
         } elseif ($request->isMethod('put')) {
             $expense = Expense::findOrFail($request->input('expense_id'));
             $expense->{$request->name} = $request->value;

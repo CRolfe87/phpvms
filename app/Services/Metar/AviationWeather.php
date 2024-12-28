@@ -7,16 +7,14 @@ use App\Support\HttpClient;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
-use function count;
-
 /**
  * Return the raw METAR/TAF string from the NOAA Aviation Weather Service
  */
 class AviationWeather extends Metar
 {
-    private const METAR_URL = 'https://aviationweather.gov/cgi-bin/data/dataserver.php?requestType=retrieve&format=xml&hoursBeforeNow=3&mostRecent=true&dataSource=metars&stationString=';
+    private const METAR_URL = 'https://aviationweather.gov/api/data/metar?ids=';
 
-    private const TAF_URL = 'https://aviationweather.gov/cgi-bin/data/dataserver.php?requestType=retrieve&format=xml&hoursBeforeNow=3&mostRecent=true&dataSource=tafs&stationString=';
+    private const TAF_URL = 'https://aviationweather.gov/api/data/taf?ids=';
 
     /**
      * @param HttpClient $httpClient
@@ -45,33 +43,8 @@ class AviationWeather extends Metar
         $url = static::METAR_URL.$icao;
 
         try {
-            $res = $this->httpClient->get($url, []);
-            $xml = simplexml_load_string($res);
-
-            if ($xml->errors && count($xml->errors->children()) > 0) {
-                return '';
-            }
-
-            $attrs = $xml->data->attributes();
-            if (!isset($attrs['num_results'])) {
-                return '';
-            }
-
-            $num_results = $attrs['num_results'];
-            if (empty($num_results)) {
-                return '';
-            }
-
-            $num_results = (int) $num_results;
-            if ($num_results === 0) {
-                return '';
-            }
-
-            if (count($xml->data->METAR->raw_text) === 0) {
-                return '';
-            }
-
-            return $xml->data->METAR->raw_text->__toString();
+            $raw_metar = $this->httpClient->get($url);
+            return trim($raw_metar);
         } catch (Exception $e) {
             Log::error('Error reading METAR: '.$e->getMessage());
             return '';
@@ -93,39 +66,16 @@ class AviationWeather extends Metar
             return '';
         }
 
-        $tafurl = static::TAF_URL.$icao;
+        $url = static::TAF_URL.$icao;
 
         try {
-            $tafres = $this->httpClient->get($tafurl, []);
-            $tafxml = simplexml_load_string($tafres);
-
-            $tafattrs = $tafxml->data->attributes();
-            if (!isset($tafattrs['num_results'])) {
-                return '';
-            }
-
-            $tafnum_results = $tafattrs['num_results'];
-            if (empty($tafnum_results)) {
-                return '';
-            }
-
-            $tafnum_results = (int) $tafnum_results;
-            if ($tafnum_results === 0) {
-                return '';
-            }
-
-            if (count($tafxml->data->TAF->raw_text) === 0) {
-                return '';
-            }
-
-            $rawTAF = $tafxml->data->TAF->raw_text->__toString();
+            $raw_taf = $this->httpClient->get($url);
             $search = array(' FM', ' TEMPO', ' BECMG', ' PROB30', ' PROB40');
             $br = '<br />';
             $brs = '<br />&nbsp;&nbsp;&nbsp;';
             $replace = array($br.'FM', $brs.'TEMPO', $brs.'BECMG', $brs.'PROB30', $brs.'PROB40');
-            $formattedTAF = str_replace($search, $replace, $rawTAF);
 
-            return $formattedTAF;
+            return str_replace($search, $replace, $raw_taf);
         } catch (Exception $e) {
             Log::error('Error reading TAF: '.$e->getMessage());
             return '';

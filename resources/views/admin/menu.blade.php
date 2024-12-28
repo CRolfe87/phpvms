@@ -50,6 +50,10 @@
       <li><a href="{{ url('/admin/airlines') }}"><i class="pe-7s-paper-plane"></i>airlines</a></li>
       @endability
 
+      @ability('admin', 'aircraft', 'fleet')
+      <li><a href="{{ url('/admin/airframes') }}"><i class="pe-7s-plane"></i>sb airframes</a></li>
+      @endability
+
       @ability('admin', 'airports')
       <li><a href="{{ url('/admin/airports') }}"><i class="pe-7s-map-marker"></i>airports</a></li>
       @endability
@@ -85,6 +89,12 @@
       @ability('admin', 'maintenance')
       <li><a href="{{ url('/admin/maintenance') }}"><i class="pe-7s-tools"></i>maintenance</a></li>
       @endability
+
+      @if(config('activitylog.enabled', true) === true)
+        @ability('admin', 'admin-access')
+        <li><a href="{{ url('/admin/activities') }}"><i class="pe-7s-news-paper"></i>activities</a></li>
+        @endability
+      @endif
 
       @ability('admin', 'settings')
       <li><a href="{{ url('/admin/settings') }}"><i class="pe-7s-config"></i>settings</a></li>

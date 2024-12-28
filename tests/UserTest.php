@@ -17,15 +17,15 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 
-class UserTest extends TestCase
+final class UserTest extends TestCase
 {
     /** @var SettingRepository */
-    protected $settingsRepo;
+    protected SettingRepository $settingsRepo;
 
     /** @var UserService */
-    protected $userSvc;
+    protected UserService $userSvc;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->userSvc = app(UserService::class);
@@ -36,7 +36,7 @@ class UserTest extends TestCase
      * Makes sure that the subfleet/aircraft returned are allowable
      * by the users rank.
      */
-    public function testRankSubfleets()
+    public function testRankSubfleets(): void
     {
         // Add subfleets and aircraft, but also add another
         // set of subfleets
@@ -93,7 +93,7 @@ class UserTest extends TestCase
      *
      * @throws \Exception
      */
-    public function testGetAllAircraft()
+    public function testGetAllAircraft(): void
     {
         $fare_svc = app(FareService::class);
 
@@ -153,18 +153,6 @@ class UserTest extends TestCase
         $subfleetAFromApi = collect($body)->firstWhere('id', $subfleetA['subfleet']->id);
         $this->assertEquals($subfleetAFromApi['fares'][0]['price'], $overrides['price']);
         $this->assertEquals($subfleetAFromApi['fares'][0]['capacity'], $overrides['capacity']);
-
-        // Read the user's profile and make sure that subfleet C is not part of this
-        // Should only return a single subfleet (subfleet A)
-        $resp = $this->get('/api/user', [], $user);
-        $resp->assertStatus(200);
-
-        $body = $resp->json('data');
-        $subfleets = $body['rank']['subfleets'];
-
-        $this->assertEquals(1, count($subfleets));
-        $this->assertEquals($subfleets[0]['fares'][0]['price'], $overrides['price']);
-        $this->assertEquals($subfleets[0]['fares'][0]['capacity'], $overrides['capacity']);
     }
 
     /**
