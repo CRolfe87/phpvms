@@ -7,7 +7,7 @@
 @endif
 @include('theme_helpers')
 @php
-  $DBasic = DT_CheckModule('DisposableBasic');
+  $DBasic = check_module('DisposableBasic');
 @endphp
 @section('content')
   {{-- Top Row --}}
@@ -30,7 +30,7 @@
       @if(Theme::getSetting('home_carousel'))
         {{-- Carousel --}}
         @php $images = DT_GetImages('image/slide/'); @endphp
-        @if($images)
+        @if(isset($images))
           <div class="card mb-2">
             <div id="DT_HomeSlide" class="carousel slide" data-bs-ride="carousel">
               <div class="carousel-inner">
@@ -103,13 +103,18 @@
     @if($DBasic)
       <div class="col-lg">
         @widget('DBasic::LeaderBoard', ['source' => 'pilot', 'period' => 'lastm', 'count' => 1, 'type' => 'flights'])
-      </div>
-      <div class="col-lg">
         @widget('DBasic::LeaderBoard', ['source' => 'pilot', 'period' => 'lastm', 'count' => 1, 'type' => 'time'])
+        @widget('DBasic::LeaderBoard', ['source' => 'pilot', 'period' => 'lastm', 'count' => 1, 'type' => 'distance'])
       </div>
       <div class="col-lg">
         @widget('DBasic::Stats', ['type' => 'home'])
       </div>
+    @else
+      <div class="col-lg">&nbsp;</div>
+      <div class="col-lg">&nbsp;</div>
     @endif
+    <div class="col-lg">
+      @widget('LatestAwards', ['count' => 4])
+    </div>
   </div>
 @endsection

@@ -12,6 +12,58 @@
     }
   </script>
   <script type="text/javascript">
+    // ******
+    // Change Aircraft Type According to Airframe selection
+    // And remove pax and baggage weights from acdata
+    const acDataOrig = String(document.getElementById("acdata").value);
+
+    function CheckAirframe() {
+      let weight = Boolean({{ setting('simbrief.use_standard_weights', false) }})
+      let actype = String("{{ $actype }}");
+      let acData = String(document.getElementById("acdata").value);
+      acOrig = JSON.parse(acDataOrig.replace(/&quot;/g,'"'));
+      acJson = JSON.parse(acData.replace(/&quot;/g,'"'));
+      let airframe = document.getElementById("sbairframe").value;
+      if (airframe != "") {
+        document.getElementById("actype").value = airframe
+        if (!weight) {
+          delete acJson.paxwgt
+          delete acJson.bagwgt
+          document.getElementById("acdata").value = JSON.stringify(acJson)
+        }
+      } else {
+        document.getElementById("actype").value = actype
+        if (!weight) {
+          document.getElementById("acdata").value = JSON.stringify(acOrig)
+        }
+      }
+    }
+  </script>
+  <script type="text/javascript">
+    // Disable Cost Index value entry if CI not possible or selected
+    function CheckCruiseProfile() {
+      let profile = document.getElementById("cruise_profile").value;
+      if (profile === "CI") {
+        document.getElementById("civalue").disabled = false
+      } else {
+        document.getElementById("civalue").disabled = true
+      }
+    }
+  </script>
+  <script type="text/javascript">
+    // Disable ETOPS Threshold and Rule Time Fields if ETOPS is not used
+    function CheckEtops() {
+      let etops = document.getElementById("etops").value;
+      if (etops == 0) {
+        document.getElementById("etopstime").disabled = true
+        document.getElementById("etopsrule").disabled = true
+      } else {
+        document.getElementById("etopstime").disabled = false
+        document.getElementById("etopsrule").disabled = false
+      }
+    }
+  </script>
+  <script type="text/javascript">
     // Calculate the Scheduled Enroute Time for Simbrief API
     // Your PHPVMS flight_time value must be from BLOCK to BLOCK
     // Including departure and arrival taxi times
@@ -167,19 +219,24 @@
     document.getElementById("date").setAttribute('value', planDOF); // Sent to Simbrief
     document.getElementById("deph").setAttribute('value', deph); // Sent to SimBrief
     document.getElementById("depm").setAttribute('value', depm); // Sent to SimBrief
-
+  </script>
+  <script type="text/javascript">
     // Check manually changed ETD hours and adjust DOF if needed
     function CheckDOF() {
-      let utcHours = realDate.getUTCHours(realDate);
-      let inputHours = document.getElementById("deph").value;
+      let CalendarMonths = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+      let CurrentDate = new Date();
+      let Tomorrow = new Date(CurrentDate.getTime() + 86400000);
+      let HoursUTC = CurrentDate.getUTCHours(CurrentDate);
+      let HoursFRM = document.getElementById("deph").value;
+      let RealDOF = ("0" + CurrentDate.getUTCDate()).slice(-2) + months[CurrentDate.getUTCMonth()] + CurrentDate.getUTCFullYear();
+      let PlanDOF = ("0" + Tomorrow.getUTCDate()).slice(-2) + months[Tomorrow.getUTCMonth()] + Tomorrow.getUTCFullYear();
 
-      if (utcHours == 23 && inputHours <= utcHours) {
-        let realDOF = ("0" + realDate.getUTCDate()).slice(-2) + months[realDate.getUTCMonth()] + realDate.getUTCFullYear();
-        document.getElementById("dof").setAttribute('value', realDOF);
-        document.getElementById("date").setAttribute('value', realDOF); // Sent to Simbrief
+      if (HoursFRM < HoursUTC) {
+        document.getElementById("dof").setAttribute('value', PlanDOF);
+        document.getElementById("date").setAttribute('value', PlanDOF); // Sent to Simbrief
       } else {
-        document.getElementById("dof").setAttribute('value', planDOF);
-        document.getElementById("date").setAttribute('value', planDOF); // Sent to Simbrief
+        document.getElementById("dof").setAttribute('value', RealDOF);
+        document.getElementById("date").setAttribute('value', RealDOF); // Sent to Simbrief
       }
     }
   </script>

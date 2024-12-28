@@ -3,8 +3,8 @@
 @include('theme_helpers')
 @php
   $units = isset($units) ? $units : DT_GetUnits();
-  $DBasic = isset($DBasic) ? $DBasic : DT_CheckModule('DisposableBasic');
-  $DSpecial = isset($DSpecial) ? $DSpecial : DT_CheckModule('DisposableSpecial');
+  $DBasic = isset($DBasic) ? $DBasic : check_module('DisposableBasic');
+  $DSpecial = isset($DSpecial) ? $DSpecial : check_module('DisposableSpecial');
 @endphp
 @section('content')
   <div class="row">
@@ -47,17 +47,27 @@
           <div class="row">
             <div class="col text-start">
               @if(filled($flight->dpt_time))
-                <i class="fas fa-clock float-start m-1"></i>
-                {{ DT_FormatScheduleTime($flight->dpt_time) }}
+                @if(Theme::getSetting('flights_localtimes') && filled($flight->dpt_airport))
+                  <i class="fas fa-clock float-start m-1" title="{{ $flight->dpt_airport->timezone }}"></i>
+                  {{ Carbon::parse(DT_FormatScheduleTime($flight->dpt_time), 'UTC')->setTimezone($flight->dpt_airport->timezone)->format('H:i') }}
+                @else
+                  <i class="fas fa-clock float-start m-1"></i>
+                  {{ DT_FormatScheduleTime($flight->dpt_time) }}
+                @endif
               @endif
             </div>
             <div class="col text-center">
-              {{ DT_FlightDays($flight->days) }}
+              {{ decode_days($flight->days) }}
             </div>
             <div class="col text-end">
               @if(filled($flight->arr_time))
-                <i class="fas fa-clock float-end m-1"></i>
-                {{ DT_FormatScheduleTime($flight->arr_time) }}
+                @if(Theme::getSetting('flights_localtimes') && filled($flight->arr_airport))
+                  {{ Carbon::parse(DT_FormatScheduleTime($flight->arr_time), 'UTC')->setTimezone($flight->arr_airport->timezone)->format('H:i') }}
+                  <i class="fas fa-clock float-end m-1" title="{{ $flight->arr_airport->timezone }}"></i>
+                @else
+                  <i class="fas fa-clock float-end m-1"></i>
+                  {{ DT_FormatScheduleTime($flight->arr_time) }}
+                @endif
               @endif
             </div>
           </div>
@@ -214,7 +224,7 @@
         @if($DBasic && Theme::getSetting('flight_jumpseat'))
           <div class="mb-1 float-start">@widget('DBasic::JumpSeat', ['dest' => $flight->dpt_airport_id])</div>
         @endif
-        @if(Theme::getSetting('flight_bid'))
+        @if(Theme::getSetting('flight_bid') && DT_CheckDays($flight->days))
           @if(!setting('pilots.only_flights_from_current') || $flight->dpt_airport_id === Auth::user()->curr_airport_id)
             {{-- !!! IMPORTANT NOTE !!! Don't remove the "save_flight" class, It will break the AJAX to save/delete --}}
             <span class="btn btn-sm save_flight {{isset($bid) ? 'btn-danger':'btn-success'}} mx-1 mb-1" onclick="AddRemoveBid('{{isset($bid) ? 'remove':'add'}}')">
@@ -239,7 +249,7 @@
           <a href="vmsacars:bid/{{ $bid->id }}" class="btn btn-sm btn-warning mx-1 mb-1">
             @lang('disposable.load_acars')
           </a>
-        @elseif($acars_plugin)
+        @elseif($acars_plugin && DT_CheckDays($flight->days))
           <a href="vmsacars:flight/{{ $flight->id }}" class="btn btn-sm btn-warning mx-1 mb-1">
             @lang('disposable.load_acars')
           </a>

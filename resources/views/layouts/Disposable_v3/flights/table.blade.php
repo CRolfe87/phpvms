@@ -20,7 +20,7 @@
           <a href="{{ route('frontend.flights.show', [$flight->id]) }}">
             {{ optional($flight->airline)->code.' '.$flight->flight_number }}
             @if(filled($flight->route_code) && in_array($flight->route_code, $tour_codes))
-              <span class="badge bg-warning text-black mx-1 px-1">Tour Flight</span>
+              <span class="badge bg-warning text-black mx-1 px-1" @if(!Theme::getSetting('flights_codeleg'))title="{{ $flight->route_code.' #'.$flight->route_leg }}"@endif>Tour Flight</span>
             @endif
           </a>
         </td>
@@ -38,10 +38,15 @@
           </a>
         </td>
         @if(filled($flight->dpt_time) && filled($flight->arr_time))
-          <td class="text-center" title="{{ DT_FlightDays($flight->days) }}">{{ DT_FormatScheduleTime($flight->dpt_time) }}</td>
-          <td class="text-center">{{ DT_FormatScheduleTime($flight->arr_time) }}</td>
+          @if(Theme::getSetting('flights_localtimes') && filled($flight->dpt_airport) && filled($flight->arr_airport))
+            <td class="text-center" title="{{ $flight->dpt_airport->timezone }}">{{ Carbon::parse(DT_FormatScheduleTime($flight->dpt_time), 'UTC')->setTimezone($flight->dpt_airport->timezone)->format('H:i') }}</td>
+            <td class="text-center" title="{{ $flight->arr_airport->timezone }}">{{ Carbon::parse(DT_FormatScheduleTime($flight->arr_time), 'UTC')->setTimezone($flight->arr_airport->timezone)->format('H:i') }}</td>
+          @else
+            <td class="text-center" title="{{ decode_days($flight->days) }}">{{ DT_FormatScheduleTime($flight->dpt_time) }}</td>
+            <td class="text-center">{{ DT_FormatScheduleTime($flight->arr_time) }}</td>
+          @endif
         @else
-          <td class="text-center" colspan="2" title="{{ DT_FlightDays($flight->days) }}">{{ DT_ConvertMinutes($flight->flight_time, '%2dh %2dm') }}</td>
+          <td class="text-center" colspan="2" title="{{ decode_days($flight->days) }}">{{ DT_ConvertMinutes($flight->flight_time, '%2dh %2dm') }}</td>
         @endif
         <td>
           @if(Theme::getSetting('flights_flags'))
@@ -53,7 +58,7 @@
           </a>
         </td>
         <td class="text-end">
-          @if(!setting('pilots.only_flights_from_current') || $flight->dpt_airport_id == optional($user->current_airport)->icao)
+          @if((!setting('pilots.only_flights_from_current') || $flight->dpt_airport_id == optional($user->current_airport)->icao) && DT_CheckDays($flight->days))
             {{-- Bid --}}
             @if(setting('bids.allow_multiple_bids') === true || setting('bids.allow_multiple_bids') === false && count($saved) === 0)
               <button class="btn btn-sm m-0 mx-1 p-0 px-1 save_flight {{ isset($saved[$flight->id]) ? 'btn-danger':'btn-success' }}"

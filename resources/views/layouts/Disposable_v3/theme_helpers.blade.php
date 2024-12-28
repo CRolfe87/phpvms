@@ -6,14 +6,49 @@
   use App\Models\Enums\UserState;
   use Carbon\Carbon;
 
-  // Check phpVMS Module
-  // Return boolean
-  if (!function_exists('DT_CheckModule')) {
-    function DT_CheckModule($module_name)
+  // 3 Letter Airport ICAO Code Fix for United States and Canada
+  // Return string or null
+  if (!function_exists('DT_AirportCode')) {
+    function DT_AirportCode($airport)
     {
-      $phpvms_module = Module::find($module_name);
+      $icao_code = null;
 
-      return filled($phpvms_module) ? $phpvms_module->isEnabled() : false;
+      if (filled($airport) && filled(optional($airport)->id)) {
+
+        $icao_code = $airport->id;
+
+        if (iconv_strlen(trim($airport->id), 'UTF8') === 3 && $airport->country === 'US') {
+          $icao_code = 'K'.$airport->id;
+        } elseif (iconv_strlen(trim($airport->id), 'UTF8') === 3 && $airport->country === 'CA') {
+          $icao_code = 'C'.$airport->id;
+        }
+      }
+
+      return $icao_code;
+    }
+  }
+
+  // Check Flight Day
+  // Return boolean
+  // This should return TRUE if there are no days defined or the days is matching
+  // FALSE when days are defined and current day is not matching
+  if (!function_exists('DT_CheckDays')) {
+    function DT_CheckDays($days = null)
+    {
+      if (empty($days)) {
+
+        return true;
+      } else {
+        $weekdays = [];
+
+        for ($i = 0; $i < 7; $i++) {
+          if ($days & pow(2, $i)) {
+            $weekdays[] = jddayofweek($i);
+          }
+        }
+
+        return in_array(Carbon::now()->dayOfWeek, $weekdays);
+      }
     }
   }
 
@@ -27,12 +62,14 @@
       $result_skip = '<span class="text-secondary fw-bold">Tankering NOT Calculated</span>';
 
       if (!$flight || !$aircraft) {
+
         return $result_skip;
       }
 
       $fuel_type = optional($aircraft->subfleet)->fuel_type;
 
       if ($fuel_type !== 1) {
+
         return $result_skip;
       }
 
@@ -49,6 +86,7 @@
       }
 
       if ($dep_cost < ($arr_cost * $factor)) {
+
         return $result_ok;
       }
 
@@ -61,14 +99,14 @@
   if (!function_exists('DT_CheckUrl')) {
     function DT_CheckUrl($url = null)
     {
-      if (!$url) { return false; }
-      $headers = get_headers($url);
+      if (!$url) {
 
-      if ($headers && strpos($headers[0], '200')) {
-        return true;
-      } else {
         return false;
       }
+
+      $headers = get_headers($url);
+
+      return (filled($headers) && str_contains($headers[0], '200')) ? true : false;
     }
   }
 
@@ -83,7 +121,7 @@
       if (is_dir($dir)) {
         if ($dh = opendir($dir)) {
           while (($file = readdir($dh)) !== false) {
-            if (stripos($file, '.jpg') !== false || stripos($file, '.jpeg') !== false || stripos($file, '.png') !== false) {
+            if (str_contains($file, '.jpg') || str_contains($file, '.jpeg') || str_contains($file, '.png')) {
               $image_files[] = $dir.$file;
             }
           }
@@ -91,11 +129,9 @@
         }
       }
 
-      if (isset($image_files)) {
-        shuffle($image_files);
-      }
+      shuffle($image_files);
 
-      return isset($image_files) ? $image_files : null;
+      return isset($image_files) ?  $image_files : null;
     }
   }
 
@@ -109,11 +145,8 @@
       $units['distance'] = setting('units.distance');
       $units['fuel'] = setting('units.fuel');
       $units['weight'] = setting('units.weight');
-
-      if ($type === 'full') {
-        $units['volume'] = settings('units.volume');
-        $units['altitude'] = settings('units.altitude');
-      }
+      $units['volume'] = setting('units.volume');
+      $units['altitude'] = setting('units.altitude');
 
       return $units;
     }
@@ -126,13 +159,18 @@
     {
       $unit = isset($unit) ? $unit : setting('units.distance');
 
-      if (!$distance[$unit] > 1) {
-        return null;
-      }
+      return ($distance[$unit] > 1) ? number_format($distance[$unit]).' '.$unit : null;
+    }
+  }
 
-      $distance = number_format($distance[$unit]).' '.$unit;
+  // Convert Distance to Meter
+  // Return numeric string (used for SimBrief TLS)
+  if (!function_exists('DT_toMeter')) {
+    function DT_toMeter($distance, $unit = null)
+    {
+      $unit = isset($unit) ? $unit : setting('units.distance');
 
-      return $distance;
+      return ($unit == 'km') ? round($distance / 3.280839895, 0) : $distance;
     }
   }
 
@@ -144,8 +182,10 @@
       $minutes = intval($minutes);
 
       if ($minutes < 1) {
-          return null;
+
+        return null;
       }
+
       $hours = floor($minutes / 60);
       $minutes = ($minutes % 60);
 
@@ -160,30 +200,7 @@
     {
       $target_unit = isset($target_unit) ? $target_unit : setting('units.weight');
 
-      if (!$value[$target_unit] > 0) {
-        return null;
-      }
-
-      $value = number_format($value[$target_unit]) . ' ' . $target_unit;
-
-      return $value;
-    }
-  }
-
-  // Decode Days Of Flights
-  // Return string
-  if (!function_exists('DT_FlightDays')) {
-    function DT_FlightDays($flight_days)
-    {
-      $days = array();
-
-      for ($i=0; $i<7; $i++) {
-        if ($flight_days & pow(2, $i)) {
-          $days[]=jddayofweek($i, 1);
-        }
-      }
-
-      return implode(', ', $days);;
+      return ($value[$target_unit] > 0) ? number_format($value[$target_unit]) . ' ' . $target_unit : null;
     }
   }
 
@@ -210,6 +227,7 @@
     function DT_FormatScheduleTime($time = null)
     {
       if (is_null($time) || !is_numeric($time) || strlen($time) === 5) {
+
         return $time;
       }
 
@@ -264,19 +282,19 @@
 
       // Color by Network
       if ($network_name == 'OFFLINE') {
-        $button_color = 'secondary';
+        $button_color = 'bg-secondary';
       } elseif ($network_name == 'VATSIM') {
-        $button_color = 'success';
+        $button_color = 'bg-success';
       } elseif ($network_name == 'IVAO') {
-        $button_color = 'primary';
+        $button_color = 'bg-primary';
       } else {
-        $button_color = 'info';
+        $button_color = 'bg-info';
       }
 
       if (filled($network_online) && $network_name != 'NONE' && $type == 'badge') {
-        $result = '<span class="badge badge-phoenix badge-phoenix-' . $button_color . '" title="' . $button_title . '">' . $network_name . '</span>';
+        $result = '<span class="badge badge-sm ' . $button_color . ' mx-1 px-1 text-black" title="' . $button_title . '">' . $network_name . '</span>';
       } elseif (filled($network_online) && $network_name != 'NONE' && $type == 'button') {
-        $result = '<span class="btn btn-subtle-' . $button_color . '" title="' . $button_title . '">' . $network_name . '</span>';
+        $result = '<span class="btn btn-sm ' . $button_color . ' m-0 mx-1 p-0 px-1 text-black" title="' . $button_title . '">' . $network_name . '</span>';
       } else {
         $result = null;
       }
@@ -293,6 +311,7 @@
       $file = isset($file) ? $file : 'disposable/simbrief_ofp_layouts.json';
 
       if (!is_file($file)) {
+
         return null;
       }
 
@@ -309,10 +328,11 @@
     function DT_RouteCode($route_code, $type = null)
     {
       if (empty($route_code)) {
+
         return null;
       }
 
-      if (DT_CheckModule('DisposableSpecial')) {
+      if (check_module('DisposableSpecial')) {
         $route_code = DS_GetTourName($route_code);
       }
 
@@ -338,8 +358,10 @@
     function DT_RouteLeg($route_leg, $type = null)
     {
       if (empty($route_leg)) {
+
         return null;
       }
+
       if ($type === 'badge') {
         $route_leg = '<span class="badge bg-warning mx-1 text-black"> Leg# '.$route_leg.'</span>';
       } elseif ($type === 'button') {
@@ -420,7 +442,7 @@
         }
       }
       // Date/Time Values (not displaying full date on purpose)
-      elseif (str_contains($slug, 'time-real') || str_contains($slug, 'time-sim')) {
+      elseif (str_contains($slug, 'time-real') || str_contains($slug, 'time-sim') || str_contains($slug, '-reached-')) {
         $value = Carbon::parse($value)->format('H:i').' UTC';
       }
 
@@ -468,6 +490,7 @@
     function DT_PirepStatus($pirep, $type = 'badge')
     {
       if ($pirep->state === PirepState::DRAFT) {
+
         return null;
       }
 
@@ -509,6 +532,7 @@
       $vasys['PersonId'] = optional($pirep->user->fields->firstWhere('name', Theme::getSetting('gen_ivao_field')))->value;
 
       if (!filled($vasys['PersonId'])) {
+
         return [];
       }
 

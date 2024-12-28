@@ -3,8 +3,8 @@
 @include('theme_helpers')
 @php
   $units = isset($units) ? $units : DT_GetUnits();
-  $DBasic = isset($DBasic) ? $DBasic : DT_CheckModule('DisposableBasic');
-  $DSpecial = isset($DSpecial) ? $DSpecial : DT_CheckModule('DisposableSpecial');
+  $DBasic = isset($DBasic) ? $DBasic : check_module('DisposableBasic');
+  $DSpecial = isset($DSpecial) ? $DSpecial : check_module('DisposableSpecial');
   $tour_codes = ($DSpecial) ? DS_GetTourCodes() : [];
 @endphp
 @section('content')
@@ -26,6 +26,11 @@
             </div>
             @if($flights->count())
               <div class="card-footer p-0 px-1 small text-end fw-bold">
+                @if(Theme::getSetting('flights_localtimes'))
+                  <span class="float-start ms-1">All times are LOCAL</span>
+                @else
+                  <span class="float-start ms-1">All times are UTC</span>
+                @endif
                 @lang('disposable.pagination', ['first' => $flights->firstItem(), 'last' => $flights->lastItem(), 'total' => $flights->total()])
               </div>
             @endif

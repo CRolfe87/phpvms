@@ -82,7 +82,7 @@
             @endif
           </div>
           <div class="col-md text-center">
-            {{ DT_FlightDays($flight->days) }}
+            {{ decode_days($flight->days) }}
           </div>
           <div class="col-lg text-end">
             @if($flight->alt_airport_id)
@@ -176,13 +176,22 @@
   <div class="row collapse {{ $auto_extend }}" id="Details{{ $flight->id }}">
     <div class="col-lg-4">
       @widget('Weather', ['icao' => $flight->dpt_airport_id])
+      @if($DBasic)
+        @widget('DBasic::Notams', ['icao' => $flight->dpt_airport_id])
+      @endif
     </div>
     <div class="col-lg-4">
       @widget('Weather', ['icao' => $flight->arr_airport_id])
+      @if($DBasic)
+        @widget('DBasic::Notams', ['icao' => $flight->arr_airport_id])
+      @endif
     </div>
     <div class="col-lg-4">
       @if(filled($flight->alt_airport_id))
         @widget('Weather', ['icao' => $flight->alt_airport_id])
+        @if($DBasic)
+          @widget('DBasic::Notams', ['icao' => $flight->alt_airport_id])
+        @endif
       @endif
     </div>
   </div>

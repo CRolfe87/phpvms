@@ -3,7 +3,7 @@
 @include('theme_helpers')
 @php
   $units = isset($units) ? $units : DT_GetUnits();
-  $DBasic = isset($DBasic) ? $DBasic : DT_CheckModule('DisposableBasic');
+  $DBasic = isset($DBasic) ? $DBasic : check_module('DisposableBasic');
 @endphp
 
 @section('content')
@@ -17,17 +17,14 @@
               <i class="fas fa-file-upload float-end"></i>
             </h5>
           </div>
-          @if(!empty($pirep))
-            {{ Form::model($pirep, ['route' => 'frontend.pireps.store']) }}
-          @else
-            {{ Form::open(['route' => 'frontend.pireps.store']) }}
-          @endif
-          @include('pireps.fields')
-          {{ Form::close() }}
+          <form class="form" method="post" action="{{ route('frontend.pireps.store') }}">
+            @csrf
+            @include('pireps.fields')
+          </form>
         </div>
       </div>
     </div>
-  @else 
+  @else
     <div class="alert alert-danger mb-1 p-1 px-2 fw-bold">Manual Pilot/Flight Reports are disabled</div>
   @endif
 @endsection
