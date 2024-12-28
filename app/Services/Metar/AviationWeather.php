@@ -118,7 +118,14 @@ class AviationWeather extends Metar
                 return '';
             }
 
-            return $tafxml->data->TAF->raw_text->__toString();
+            $rawTAF = $tafxml->data->TAF->raw_text->__toString();
+            $search = array(' FM', ' TEMPO', ' BECMG', ' PROB30', ' PROB40');
+            $br = '<br />';
+            $brs = '<br />&nbsp;&nbsp;&nbsp;';
+            $replace = array($br.'FM', $brs.'TEMPO', $brs.'BECMG', $brs.'PROB30', $brs.'PROB40');
+            $formattedTAF = str_replace($search, $replace, $rawTAF);
+
+            return $formattedTAF;
         } catch (Exception $e) {
             Log::error('Error reading TAF: '.$e->getMessage());
             return '';

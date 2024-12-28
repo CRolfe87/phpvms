@@ -185,7 +185,7 @@ class User extends Authenticatable implements LaratrustUser, MustVerifyEmail
                     'pilots.id_code'
                 ) : optional($this->airline)->icao;
 
-                return $ident_code.str_pad($attrs['pilot_id'], $length, '0', STR_PAD_LEFT);
+                return $ident_code . str_pad($attrs['pilot_id'], $length, '0', STR_PAD_LEFT);
             }
         );
     }
@@ -200,7 +200,7 @@ class User extends Authenticatable implements LaratrustUser, MustVerifyEmail
         return Attribute::make(
             get: function ($_, $attrs) {
                 $ident_code = filled(setting('pilots.id_code')) ? setting('pilots.id_code') : optional($this->airline)->icao;
-                $atc = filled($attrs['callsign']) ? $ident_code.$attrs['callsign'] : $ident_code.$attrs['pilot_id'];
+                $atc = filled($attrs['callsign']) ? $ident_code . $attrs['callsign'] : $ident_code . $attrs['pilot_id'];
 
                 return $atc;
             }
@@ -227,7 +227,7 @@ class User extends Authenticatable implements LaratrustUser, MustVerifyEmail
                 $loop_count = 0;
 
                 while ($loop_count < ($count - 1)) {
-                    $gdpr_name .= $name_parts[$loop_count].' ';
+                    $gdpr_name .= $name_parts[$loop_count] . ' ';
                     $loop_count++;
                 }
 
@@ -280,10 +280,10 @@ class User extends Authenticatable implements LaratrustUser, MustVerifyEmail
     {
         $default = config('gravatar.default');
 
-        $uri = config('gravatar.url').md5(strtolower(trim($this->email))).'?d='.urlencode($default);
+        $uri = config('gravatar.url') . md5(strtolower(trim($this->email))) . '?d=' . urlencode($default);
 
         if ($size !== null) {
-            $uri .= '&s='.$size;
+            $uri .= '&s=' . $size;
         }
 
         return $uri;
@@ -310,7 +310,8 @@ class User extends Authenticatable implements LaratrustUser, MustVerifyEmail
 
     public function awards(): BelongsToMany
     {
-        return $this->belongsToMany(Award::class, 'user_awards')->withTrashed();
+        return $this->belongsToMany(Award::class, 'user_awards')->withTrashed()
+            ->withPivot('created_at');
     }
 
     public function bids(): HasMany

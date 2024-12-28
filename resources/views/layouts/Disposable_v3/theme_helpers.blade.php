@@ -264,19 +264,19 @@
 
       // Color by Network
       if ($network_name == 'OFFLINE') {
-        $button_color = 'bg-secondary';
+        $button_color = 'secondary';
       } elseif ($network_name == 'VATSIM') {
-        $button_color = 'bg-success';
+        $button_color = 'success';
       } elseif ($network_name == 'IVAO') {
-        $button_color = 'bg-primary';
+        $button_color = 'primary';
       } else {
-        $button_color = 'bg-info';
+        $button_color = 'info';
       }
 
       if (filled($network_online) && $network_name != 'NONE' && $type == 'badge') {
-        $result = '<span class="badge badge-sm ' . $button_color . ' mx-1 px-1 text-black" title="' . $button_title . '">' . $network_name . '</span>';
+        $result = '<span class="badge badge-phoenix badge-phoenix-' . $button_color . '" title="' . $button_title . '">' . $network_name . '</span>';
       } elseif (filled($network_online) && $network_name != 'NONE' && $type == 'button') {
-        $result = '<span class="btn btn-sm ' . $button_color . ' m-0 mx-1 p-0 px-1 text-black" title="' . $button_title . '">' . $network_name . '</span>';
+        $result = '<span class="btn btn-subtle-' . $button_color . '" title="' . $button_title . '">' . $network_name . '</span>';
       } else {
         $result = null;
       }

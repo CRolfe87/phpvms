@@ -1,0 +1,143 @@
+/* prettier-ignore */
+
+/* Select2 styles */
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.49;
+    color: var(--phoenix-body-color);
+    background-color: var(--phoenix-body-bg);
+    border: 1px solid var(--phoenix-border-color);
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field:focus-visible {
+    outline: none;
+    border-color: var(--phoenix-primary);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: var(--phoenix-body-color) transparent transparent transparent;
+}
+
+/* .select2-container--focus {
+    color: var(--phoenix-body-color);
+    background-color: var(--phoenix-emphasis-bg);
+    -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0), inset 0 0 0 30px var(--phoenix-emphasis-bg), 0 0 0 0.25rem rgba(var(--phoenix-primary-rgb), 0.25);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0), inset 0 0 0 30px var(--phoenix-emphasis-bg), 0 0 0 0.25rem rgba(var(--phoenix-primary-rgb), 0.25);
+} */
+
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent var(--phoenix-body-color) transparent;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.49;
+    color: var(--phoenix-body-color);
+}
+
+.select2-container--default .select2-selection--single {
+    background-color: var(--phoenix-emphasis-bg);
+    border: 1px solid var(--phoenix-border-color);
+    height: 36px;
+}
+
+.select2-container--focus>.selection>.select2-selection--single {
+    border-color: var(--phoenix-blue);
+    -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0), inset 0 0 0 30px var(--phoenix-emphasis-bg), 0 0 0 0.25rem rgba(var(--phoenix-primary-rgb), 0.25);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0), inset 0 0 0 30px var(--phoenix-emphasis-bg), 0 0 0 0.25rem rgba(var(--phoenix-primary-rgb), 0.25);
+}
+
+.select2-container--default .select2-selection--single:focus-visible {
+    outline: none
+}
+
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: var(--phoenix-body-color);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    top: 4px;
+    right: 5px;
+}
+
+.select2-dropdown {
+    border-radius: var(--phoenix-border-radius);
+    background-color: var(--phoenix-emphasis-bg);
+    border: 1px solid var(--phoenix-border-color);
+}
+
+.select2-container--open .select2-dropdown--below {
+    box-shadow: 6px 6px 6px rgba(0, 0, 0, .4);
+}
+
+.select2-container--open .select2-dropdown--above {
+    box-shadow: 6px -6px 6px rgba(0, 0, 0, .4);
+}
+
+.select2-container--default.select2-container--open.select2-container--below .select2-selection--multiple,
+.select2-container--default.select2-container--open.select2-container--below .select2-selection--single {
+    border-bottom: 0px;
+}
+
+.select2-results__options::-webkit-scrollbar {
+    width: 6px;
+}
+
+.select2-results__options::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.select2-container--default .select2-results__option[aria-selected=true] {
+    color: var(--phoenix-primary-text-emphasis);
+    background-color: var(--phoenix-primary-bg-subtle);
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    color: var(--phoenix-primary-lighter) !important;
+    background-color: rgb(var(--phoenix-primary-rgb)) !important;
+}
+
+.select2-results__options::-webkit-scrollbar-thumb {
+    background-color: rgba(var(--phoenix-body-color-rgb), .25);
+    border-radius: var(--phoenix-border-radius);
+}
+
+.select2-container--default .select2-results>.select2-results__options {
+    border-radius: 0 0 var(--phoenix-border-radius) var(--phoenix-border-radius);
+}
+
+.select2-results__option {
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.49;
+}
+
+.input-group > .select2-container {
+    flex: 1 1 auto;
+    width: 1% !important;
+    min-width: 0;
+}
+
+.input-group > .select2-container .select2-selection--single {
+    height: 33.0625px;
+}
+
+[data-bs-theme=dark] .leaflet-tile-pane {
+    filter: invert(100%) saturate(300%) sepia(70%) hue-rotate(200deg);
+}
+
+[data-bs-theme=dark] #FlightMap {
+    background-color: var(--dark);
+}
+
+[data-bs-theme=dark] #live_flights_table {
+    color: rgb(211, 203, 194) !important;
+}
+
+
+/*# sourceMappingURL=user.css.map */
