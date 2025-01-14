@@ -38,6 +38,7 @@ declare -a remove_files=(
   phpunit.xml
   phpvms.iml
   phpstan.neon
+  pint.json
   Procfile
   swagger.yml
   composer.phar
@@ -97,4 +98,3 @@ mkdir -p $BASE_DIR/dist
 cd $BASE_DIR/dist
 
 mv "/tmp/$TAR_NAME" "/tmp/$ZIP_NAME" "/tmp/$TAR_NAME.sha256" "/tmp/$ZIP_NAME.sha256" .
-

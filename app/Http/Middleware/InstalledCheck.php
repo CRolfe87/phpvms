@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Handle the authentication for the API layer
  */
@@ -22,7 +23,7 @@ class InstalledCheck implements Middleware
     public function handle(Request $request, Closure $next)
     {
         $key = config('app.key');
-        if ((empty($key) || $key === 'base64:zdgcDqu9PM8uGWCtMxd74ZqdGJIrnw812oRMmwDF6KY=')
+        if ((empty($key) || $key === 'base64:zdgcDqu9PM8uGWCtMxd74ZqdGJIrnw812oRMmwDF6KY=' || !Schema::hasTable('users') || User::count() === 0)
             && !$request->is(['install', 'install/*'])
             && !$request->is(['update', 'update/*'])
         ) {

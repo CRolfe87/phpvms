@@ -8,6 +8,7 @@ use App\Exceptions\Handler;
 use App\Models\User;
 use App\Repositories\SettingRepository;
 use App\Services\DatabaseService;
+use App\Services\Installer\SeederService;
 use App\Services\ModuleService;
 use Carbon\Carbon;
 use DateTimeImmutable;
@@ -30,8 +31,8 @@ use ReflectionClass;
  */
 abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
 {
-    use TestData;
     use CreatesApplication;
+    use TestData;
 
     /**
      * The base URL to use while testing the application.
@@ -39,7 +40,9 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
     public static string $prefix = '/api';
 
     protected $app;
+
     protected string $baseUrl = 'http://localhost';
+
     protected array $connectionsToTransact = ['test'];
 
     /** @var User */
@@ -66,6 +69,8 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
         Artisan::call('database:create', ['--reset' => true]);
         Artisan::call('migrate', ['--env' => 'testing', '--force' => true]);
 
+        app(SeederService::class)->syncAllSeeds();
+
         /** @var ModuleService $moduleSvc */
         $moduleSvc = app(ModuleService::class);
         $modules = Module::all();
@@ -90,11 +95,10 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
      */
     protected function disableExceptionHandling(): void
     {
-        $this->app->instance(ExceptionHandler::class, new class() extends Handler {
+        $this->app->instance(ExceptionHandler::class, new class() extends Handler
+        {
             /** @noinspection PhpMissingParentConstructorInspection */
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function report(\Throwable $e)
             {
@@ -108,9 +112,6 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
         });
     }
 
-    /**
-     * @param callable|null $mocks
-     */
     protected function addMocks(?callable $mocks): void
     {
         $handler = HandlerStack::create($mocks);
@@ -118,16 +119,11 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
         $this->client->httpClient = $client;
     }
 
-    /**
-     * @param User|null $user
-     * @param array     $headers
-     *
-     * @return array
-     */
     public function headers(?User $user = null, array $headers = []): array
     {
         if ($user !== null) {
             $headers['x-api-key'] = $user->api_key;
+
             return $headers;
         }
 
@@ -140,8 +136,6 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
 
     /**
      * Import data from a YML file
-     *
-     * @param string $file
      */
     public function addData(string $file): void
     {
@@ -156,9 +150,6 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
 
     /**
      * Make sure an object has the list of keys
-     *
-     * @param array $obj
-     * @param array $keys
      */
     public function assertHasKeys(array $obj, array $keys = []): void
     {
@@ -170,7 +161,6 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
     /**
      * Read a file from the data directory
      *
-     * @param string $filename
      *
      * @return false|string
      */
@@ -192,8 +182,6 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
 
     /**
      * Return a mock Guzzle Client with a response loaded from $mockFile
-     *
-     * @param array|string $files
      */
     public function mockGuzzleClient(array|string $files): void
     {
@@ -263,9 +251,6 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
 
     /**
      * Update a setting
-     *
-     * @param string $key
-     * @param string $value
      */
     public function updateSetting(string $key, string $value): void
     {
@@ -277,13 +262,8 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
      * So we can test private/protected methods
      * http://bit.ly/1mr5hMq
      *
-     * @param        $object
-     * @param string $methodName
-     * @param array  $parameters
      *
      * @throws \ReflectionException
-     *
-     * @return mixed
      */
     public function invokeMethod(&$object, string $methodName, array $parameters = []): mixed
     {
@@ -297,10 +277,6 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
     /**
      * Transform any data that's passed in. E.g, make sure that any mutator
      * classes (e.g, units) are not passed in as the mutator class
-     *
-     * @param array $data
-     *
-     * @return array
      */
     protected function transformData(array &$data): array
     {
@@ -329,10 +305,7 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
      * Override the GET call to inject the user API key
      *
      * @param string $uri
-     * @param array  $headers
      * @param null   $user
-     *
-     * @return TestResponse
      */
     public function get($uri, array $headers = [], $user = null): TestResponse
     {
@@ -348,11 +321,7 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
      * Override the POST calls to inject the user API key
      *
      * @param string $uri
-     * @param array  $data
-     * @param array  $headers
      * @param null   $user
-     *
-     * @return TestResponse
      */
     public function post($uri, array $data = [], array $headers = [], $user = null): TestResponse
     {
@@ -369,11 +338,7 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
      * Override the PUT calls to inject the user API key
      *
      * @param string $uri
-     * @param array  $data
-     * @param array  $headers
      * @param null   $user
-     *
-     * @return TestResponse
      */
     public function put($uri, array $data = [], array $headers = [], $user = null): TestResponse
     {
@@ -389,11 +354,7 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
      * Override the DELETE calls to inject the user API key
      *
      * @param string $uri
-     * @param array  $data
-     * @param array  $headers
      * @param null   $user
-     *
-     * @return TestResponse
      */
     public function delete($uri, array $data = [], array $headers = [], $user = null): TestResponse
     {
