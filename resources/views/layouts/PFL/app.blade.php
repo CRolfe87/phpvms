@@ -169,7 +169,6 @@
     <script src="{{ public_asset('/assets/vendor/phoenix/is/is.min.js') }}"></script>
     <script src="{{ public_asset('/assets/vendor/phoenix/fontawesome/all.min.js') }}"></script>
     <script src="{{ public_asset('/assets/vendor/phoenix/lodash/lodash.min.js') }}"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=window.scroll"></script>
     <script src="{{ public_asset('/assets/vendor/phoenix/list.js/list.min.js') }}"></script>
     <script src="{{ public_asset('/assets/vendor/phoenix/feather-icons/feather.min.js') }}"></script>
     <script src="{{ public_asset('/assets/vendor/phoenix/dayjs/dayjs.min.js') }}"></script>
