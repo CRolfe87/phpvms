@@ -1,0 +1,6 @@
+[submodule "modules/DisposableBasic"]
+	path = modules/DisposableBasic
+	url = git@github.com:CRolfe87/DisposableBasic.git
+[submodule "modules/DisposableSpecial"]
+	path = modules/DisposableSpecial
+	url = git@github.com:CRolfe87/DisposableSpecial.git
